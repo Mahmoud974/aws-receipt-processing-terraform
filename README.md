@@ -36,6 +36,8 @@ Le traitement suit donc les étapes suivantes :
 
 ---
 
+
+
 # Structure du projet
 
 ```text
@@ -68,7 +70,11 @@ receipt-processing/
 
 ---
 
+
+
 # Détail des composants
+
+
 
 ## 1. Stockage des tickets dans Amazon S3
 
@@ -91,6 +97,8 @@ Exemple du bucket contenant plusieurs tickets :
 Les fichiers testés dans ce projet comprennent notamment plusieurs captures de tickets ainsi que `ticket-euros.png`.
 
 ---
+
+
 
 ## 2. Exemple de ticket traité
 
@@ -121,6 +129,8 @@ Total  : 128,00 €
 ```
 
 ---
+
+
 
 ## 3. Fonction AWS Lambda
 
@@ -172,6 +182,8 @@ afin de pouvoir traiter plusieurs événements dans une même invocation.
 
 ---
 
+
+
 ## 4. Extraction avec Amazon Textract
 
 Le service utilisé pour analyser les tickets est :
@@ -209,6 +221,8 @@ file   : ticket-euros.png
 ```
 
 ---
+
+
 
 ## 5. Stockage des résultats dans DynamoDB
 
@@ -255,6 +269,8 @@ Terraform active également le **Point-in-Time Recovery** afin de pouvoir restau
 
 ---
 
+
+
 ## 6. Envoi du résultat avec Amazon SES
 
 Une fois les informations enregistrées dans DynamoDB, Lambda utilise **Amazon SES** pour envoyer un email récapitulatif.
@@ -283,6 +299,8 @@ L'adresse doit être vérifiée avant que Lambda puisse envoyer les messages.
 > Si SES est encore en mode sandbox, les adresses utilisées comme expéditeur et destinataire doivent être vérifiées.
 
 ---
+
+
 
 ## 7. IAM et permissions Lambda
 
@@ -324,6 +342,8 @@ Les permissions SES sont limitées à l'identité SES configurée par le projet 
 Resource = "*"
 ```
 
+
+
 ### Version initiale
 
 La première version réalisée manuellement utilisait plusieurs politiques AWS gérées :
@@ -345,6 +365,8 @@ Cette configuration est pratique pour un premier laboratoire, mais elle donne pl
 La version Terraform applique donc une politique plus restrictive suivant le principe du **least privilege**.
 
 ---
+
+
 
 ## 8. Logs et métriques CloudWatch
 
@@ -392,6 +414,8 @@ Cela évite de conserver les logs indéfiniment.
 
 ---
 
+
+
 # Correspondance Terraform ↔ AWS
 
 
@@ -409,7 +433,11 @@ Cela évite de conserver les logs indéfiniment.
 
 ---
 
+
+
 # Déploiement
+
+
 
 ## 1. Initialiser Terraform
 
@@ -418,6 +446,8 @@ terraform init
 ```
 
 ---
+
+
 
 ## 2. Vérifier la configuration
 
@@ -428,6 +458,8 @@ terraform validate
 
 ---
 
+
+
 ## 3. Examiner le plan
 
 ```bash
@@ -437,6 +469,8 @@ terraform plan
 Il est important de lire le plan avant de créer les ressources.
 
 ---
+
+
 
 ## 4. Déployer
 
@@ -470,6 +504,8 @@ S3 bucket
 
 ---
 
+
+
 # Vérification de SES
 
 Après le déploiement, Amazon SES envoie un email de vérification à l'adresse configurée dans :
@@ -483,6 +519,8 @@ Ouvrez cet email et cliquez sur le lien fourni par AWS.
 L'identité doit être vérifiée avant de tester l'envoi d'emails.
 
 ---
+
+
 
 # Tester le pipeline
 
@@ -522,6 +560,8 @@ Textract
 
 ---
 
+
+
 # Vérifier DynamoDB
 
 Récupérez le nom de la table :
@@ -544,6 +584,8 @@ vendor     : KAYAK AVENTURES
 
 ---
 
+
+
 # Sécurité
 
 Le projet applique plusieurs bonnes pratiques.
@@ -556,6 +598,8 @@ Le bucket :
 - bloque les accès publics ;
 - utilise le versioning ;
 - applique une règle de cycle de vie.
+
+
 
 ### IAM
 
@@ -574,6 +618,8 @@ Une politique de rétention empêche l'accumulation indéfinie des logs.
 La permission d'envoi est limitée à l'identité SES configurée.
 
 ---
+
+
 
 # Gestion du cycle de vie des tickets
 
@@ -595,6 +641,8 @@ Les anciens documents sont alors automatiquement supprimés par la règle de lif
 
 ---
 
+
+
 ### AccessDenied
 
 Un message `AccessDeniedException` indique généralement qu'une action AWS utilisée par la Lambda n'est pas présente dans sa politique IAM.
@@ -602,6 +650,8 @@ Un message `AccessDeniedException` indique généralement qu'une action AWS util
 Consultez les logs CloudWatch pour identifier l'appel concerné.
 
 ---
+
+
 
 # Nettoyage des ressources
 
@@ -629,34 +679,3 @@ terraform destroy
 
 ---
 
-# Résultat
-
-Le projet permet de passer automatiquement :
-
-```text
-                 ticket-euros.png
-                        |
-                        v
-                       S3
-                        |
-                        v
-                     Lambda
-                        |
-                        v
-                    Textract
-                        |
-            +-----------+-----------+
-            |                       |
-            v                       v
-        DynamoDB                    SES
-            |                       |
-            v                       v
-vendeur / date / total       email récapitulatif
-
-                        +
-                        |
-                        v
-                   CloudWatch
-```
-
-Un simple upload d'un ticket suffit donc à déclencher l'ensemble du traitement sans serveur à administrer.
