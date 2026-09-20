@@ -21,7 +21,7 @@ Le traitement suit donc les étapes suivantes :
 
 # Architecture
 
-![Diagramme d'architecture AWS](images/architecture.png)
+![Diagramme d'architecture AWS](images/Architecture.png)
 
 # Services utilisés
 
